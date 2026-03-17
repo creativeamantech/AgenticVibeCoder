@@ -24,15 +24,22 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalContext
 import com.mahavtaar.vibecoder.ui.agent.AgentChatPanel
 import com.mahavtaar.vibecoder.ui.agent.BrowserPanel
+import com.mahavtaar.vibecoder.ui.editor.EditorScreen
+import com.mahavtaar.vibecoder.ui.filetree.FileTreePanel
 import com.mahavtaar.vibecoder.ui.theme.DarkBackground
 import com.mahavtaar.vibecoder.ui.theme.DarkSurface
 import com.mahavtaar.vibecoder.ui.theme.TextPrimary
 import java.io.File
 import android.webkit.WebView
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.mahavtaar.vibecoder.editor.EditorViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainScreen(webView: WebView?) {
+fun MainScreen(
+    webView: WebView?,
+    editorViewModel: EditorViewModel = hiltViewModel()
+) {
     val context = LocalContext.current
     val workingDir = File(context.filesDir, "workspace").absolutePath
 
@@ -57,10 +64,10 @@ fun MainScreen(webView: WebView?) {
                     .width(200.dp)
                     .fillMaxHeight()
                     .background(DarkBackground)
-                    .padding(8.dp),
             ) {
-                Text("📁 File Tree Stub", color = TextPrimary)
-                // TODO: Phase 6 - Implement File Explorer
+                FileTreePanel(
+                    onFileSelected = { path -> editorViewModel.openFile(path) }
+                )
             }
 
             Divider(modifier = Modifier.fillMaxHeight().width(1.dp), color = Color.DarkGray)
@@ -71,11 +78,8 @@ fun MainScreen(webView: WebView?) {
                     .weight(2f)
                     .fillMaxHeight()
                     .background(DarkBackground)
-                    .padding(8.dp),
-                contentAlignment = Alignment.Center
             ) {
-                Text("💻 Code Editor Stub (MonacoWebView)", color = TextPrimary)
-                // TODO: Phase 6 - Implement MonacoWebView wrapper and tabs
+                EditorScreen(viewModel = editorViewModel)
             }
 
             Divider(modifier = Modifier.fillMaxHeight().width(1.dp), color = Color.DarkGray)
