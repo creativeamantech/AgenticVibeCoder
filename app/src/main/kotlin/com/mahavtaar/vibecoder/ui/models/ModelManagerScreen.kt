@@ -10,6 +10,9 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
+import androidx.compose.material.pullrefresh.PullRefreshIndicator
+import androidx.compose.material.pullrefresh.pullRefresh
+import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -20,17 +23,25 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.mahavtaar.vibecoder.ui.theme.DarkBackground
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+
+@OptIn(androidx.compose.material.ExperimentalMaterialApi::class)
 @Composable
 fun ModelManagerScreen(viewModel: ModelManagerViewModel = hiltViewModel()) {
     val state by viewModel.uiState.collectAsState()
+    val pullRefreshState = rememberPullRefreshState(refreshing = state.isRefreshing, onRefresh = { viewModel.refresh() })
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(DarkBackground)
-            .padding(16.dp)
-    ) {
-        Text("Model Manager", color = Color.White)
+    Box(modifier = Modifier.fillMaxSize().pullRefresh(pullRefreshState)) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(DarkBackground)
+                .padding(16.dp)
+                .verticalScroll(rememberScrollState())
+        ) {
+            Text("Model Manager", color = Color.White)
 
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text("Engine:", color = Color.White, modifier = Modifier.padding(end = 8.dp))
@@ -69,5 +80,11 @@ fun ModelManagerScreen(viewModel: ModelManagerViewModel = hiltViewModel()) {
                 Text("Unload Model")
             }
         }
+        }
+        PullRefreshIndicator(
+            refreshing = state.isRefreshing,
+            state = pullRefreshState,
+            modifier = Modifier.align(Alignment.TopCenter)
+        )
     }
 }

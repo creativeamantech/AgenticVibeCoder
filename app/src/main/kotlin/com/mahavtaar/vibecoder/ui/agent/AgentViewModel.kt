@@ -16,9 +16,15 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+import com.mahavtaar.vibecoder.agent.AgentCommand
+import com.mahavtaar.vibecoder.agent.AgentCommandBus
+import com.mahavtaar.vibecoder.util.WakeLockManager
+
 @HiltViewModel
 class AgentViewModel @Inject constructor(
-    private val orchestrator: AgentOrchestrator
+    private val orchestrator: AgentOrchestrator,
+    private val commandBus: AgentCommandBus,
+    private val wakeLockManager: WakeLockManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AgentUiState())
@@ -27,8 +33,21 @@ class AgentViewModel @Inject constructor(
     private var currentJob: Job? = null
     private var confirmationDeferred: CompletableDeferred<Boolean>? = null
 
+    init {
+        viewModelScope.launch {
+            commandBus.commands.collect { cmd ->
+                when (cmd) {
+                    is AgentCommand.Stop -> stopAgent()
+                    is AgentCommand.Confirm -> confirmAction(cmd.approved)
+                }
+            }
+        }
+    }
+
     fun startTask(task: String, context: AgentContext) {
         if (_uiState.value.isRunning) return
+
+        wakeLockManager.acquire()
 
         _uiState.update {
             it.copy(
@@ -80,14 +99,17 @@ class AgentViewModel @Inject constructor(
                     is AgentEvent.FinalAnswer -> {
                         _uiState.update { it.copy(finalAnswer = event.text, isRunning = false) }
                         addStep(AgentStepUi.FinalAnswerCard(event.text))
+                        wakeLockManager.release()
                     }
                     is AgentEvent.StepLimitReached -> {
                         _uiState.update { it.copy(isRunning = false) }
                         addStep(AgentStepUi.FinalAnswerCard("Step limit reached without final answer."))
+                        wakeLockManager.release()
                     }
                     is AgentEvent.Error -> {
                         _uiState.update { it.copy(isRunning = false) }
                         addStep(AgentStepUi.ObservationCard("System", "Error: ${event.message}"))
+                        wakeLockManager.release()
                     }
                 }
             }
@@ -103,6 +125,7 @@ class AgentViewModel @Inject constructor(
         currentJob?.cancel()
         _uiState.update { it.copy(isRunning = false, awaitingConfirmation = null) }
         addStep(AgentStepUi.ObservationCard("System", "Agent stopped by user."))
+        wakeLockManager.release()
     }
 
     fun toggleObservationExpansion(index: Int) {

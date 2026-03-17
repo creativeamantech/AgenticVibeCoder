@@ -52,6 +52,19 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import com.mahavtaar.vibecoder.ui.onboarding.OnboardingScreen
+import com.mahavtaar.vibecoder.ui.auditlog.AuditLogScreen
+import com.mahavtaar.vibecoder.error.GlobalErrorViewModel
+import com.mahavtaar.vibecoder.error.ErrorBanner
+import com.mahavtaar.vibecoder.ui.terminal.TerminalViewModel
+import androidx.compose.animation.core.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.draw.clip
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -59,7 +72,9 @@ fun MainScreen(
     webView: WebView?,
     editorViewModel: EditorViewModel = hiltViewModel(),
     mainViewModel: MainViewModel = hiltViewModel(),
-    agentViewModel: AgentViewModel = hiltViewModel()
+    agentViewModel: AgentViewModel = hiltViewModel(),
+    globalErrorViewModel: GlobalErrorViewModel = hiltViewModel(),
+    terminalViewModel: TerminalViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
     val workingDir = File(context.filesDir, "workspace").absolutePath
@@ -68,39 +83,75 @@ fun MainScreen(
     val configuration = LocalConfiguration.current
     val isTablet = configuration.screenWidthDp >= 600
 
-    Column(modifier = Modifier.fillMaxSize().background(DarkBackground)) {
-        // Toolbar
-        TopAppBar(
-            title = { Text("VibeCode", color = TextPrimary) },
-            colors = TopAppBarDefaults.topAppBarColors(
-                containerColor = DarkSurface
-            ),
-            actions = {
-                IconButton(onClick = { mainViewModel.navigate(AppDestination.Editor) }) {
-                    Icon(Icons.Default.Code, contentDescription = "Editor", tint = if (currentDestination == AppDestination.Editor) AccentBlue else TextPrimary)
-                }
-                IconButton(onClick = { mainViewModel.navigate(AppDestination.Workflows) }) {
-                    Icon(Icons.Default.PlayArrow, contentDescription = "Workflows", tint = if (currentDestination == AppDestination.Workflows) AccentBlue else TextPrimary)
-                }
-                IconButton(onClick = { mainViewModel.navigate(AppDestination.ModelManager) }) {
-                    Icon(Icons.Default.Memory, contentDescription = "Models", tint = if (currentDestination == AppDestination.ModelManager) AccentBlue else TextPrimary)
-                }
-                IconButton(onClick = { mainViewModel.navigate(AppDestination.Settings) }) {
-                    Icon(Icons.Default.Settings, contentDescription = "Settings", tint = if (currentDestination == AppDestination.Settings) AccentBlue else TextPrimary)
-                }
-            }
-        )
-        Divider(color = Color.DarkGray)
+    val snackbarHostState = remember { SnackbarHostState() }
+    val currentError by globalErrorViewModel.errors.collectAsState(initial = null)
 
-        when (currentDestination) {
-            AppDestination.Settings -> SettingsScreen()
-            AppDestination.Workflows -> WorkflowsScreen(onRunWorkflow = { prompt ->
-                mainViewModel.navigate(AppDestination.Editor) // Switch to main split-pane
-                val agentContext = AgentContext(workingDir = workingDir, sessionId = UUID.randomUUID().toString())
-                agentViewModel.startTask(prompt, agentContext)
-            })
-            AppDestination.ModelManager -> ModelManagerScreen()
-            else -> {
+    val agentState by agentViewModel.uiState.collectAsState()
+    val terminalState by terminalViewModel.uiState.collectAsState()
+
+    val infiniteTransition = rememberInfiniteTransition()
+    val alpha by infiniteTransition.animateFloat(
+        initialValue = 0.3f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1000, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        )
+    )
+
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        topBar = {
+            if (currentDestination != AppDestination.Onboarding) {
+                TopAppBar(
+                    title = {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text("VibeCode", color = TextPrimary)
+                            if (agentState.isRunning) {
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(SuccessGreen.copy(alpha = alpha)))
+                            }
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = DarkSurface
+                    ),
+                    actions = {
+                        IconButton(onClick = { mainViewModel.navigate(AppDestination.Editor) }) {
+                            Icon(Icons.Default.Code, contentDescription = "Editor", tint = if (currentDestination == AppDestination.Editor) AccentBlue else TextPrimary)
+                        }
+                        IconButton(onClick = { mainViewModel.navigate(AppDestination.Workflows) }) {
+                            Icon(Icons.Default.PlayArrow, contentDescription = "Workflows", tint = if (currentDestination == AppDestination.Workflows) AccentBlue else TextPrimary)
+                        }
+                        IconButton(onClick = { mainViewModel.navigate(AppDestination.ModelManager) }) {
+                            Icon(Icons.Default.Memory, contentDescription = "Models", tint = if (currentDestination == AppDestination.ModelManager) AccentBlue else TextPrimary)
+                        }
+                        IconButton(onClick = { mainViewModel.navigate(AppDestination.AuditLog) }) {
+                            Icon(Icons.Default.Settings, contentDescription = "Audit Log", tint = if (currentDestination == AppDestination.AuditLog) AccentBlue else TextPrimary)
+                        }
+                        IconButton(onClick = { mainViewModel.navigate(AppDestination.Settings) }) {
+                            Icon(Icons.Default.Settings, contentDescription = "Settings", tint = if (currentDestination == AppDestination.Settings) AccentBlue else TextPrimary)
+                        }
+                    }
+                )
+            }
+        },
+        containerColor = DarkBackground
+    ) { paddingValues ->
+        Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
+            ErrorBanner(error = currentError, onDismiss = { /* Optionally clear error state */ })
+
+            when (currentDestination) {
+                AppDestination.Onboarding -> OnboardingScreen(onComplete = { mainViewModel.completeOnboarding() })
+                AppDestination.Settings -> SettingsScreen()
+                AppDestination.AuditLog -> AuditLogScreen()
+                AppDestination.Workflows -> WorkflowsScreen(onRunWorkflow = { prompt ->
+                    mainViewModel.navigate(AppDestination.Editor)
+                    val agentContext = AgentContext(workingDir = workingDir, sessionId = UUID.randomUUID().toString())
+                    agentViewModel.startTask(prompt, agentContext)
+                })
+                AppDestination.ModelManager -> ModelManagerScreen()
+                else -> {
                 if (isTablet) {
                     // Split Pane Area (Editor, Agent, Browser)
                     Row(modifier = Modifier.weight(1f).fillMaxWidth()) {
@@ -191,7 +242,19 @@ fun MainScreen(
                         NavigationBarItem(
                             selected = currentDestination == AppDestination.Terminal,
                             onClick = { mainViewModel.navigate(AppDestination.Terminal) },
-                            icon = { Icon(Icons.Default.Settings, contentDescription = "Terminal") }, // Reuse icon
+                            icon = {
+                                androidx.compose.material3.BadgedBox(
+                                    badge = {
+                                        if (terminalState.sessions.isNotEmpty()) {
+                                            androidx.compose.material3.Badge(containerColor = AccentBlue, contentColor = Color.White) {
+                                                Text(terminalState.sessions.size.toString())
+                                            }
+                                        }
+                                    }
+                                ) {
+                                    Icon(Icons.Default.Settings, contentDescription = "Terminal")
+                                }
+                            },
                             label = { Text("Terminal") },
                             colors = NavigationBarItemDefaults.colors(selectedIconColor = AccentBlue, unselectedIconColor = TextPrimary, selectedTextColor = AccentBlue, unselectedTextColor = TextPrimary)
                         )
@@ -200,10 +263,11 @@ fun MainScreen(
             }
         }
 
-        // Bottom Pane: Terminal (Tablet only)
-        if (isTablet && (currentDestination == AppDestination.Editor || currentDestination == AppDestination.Agent || currentDestination == AppDestination.Browser || currentDestination == AppDestination.Terminal)) {
-            Divider(color = Color.DarkGray)
-            TerminalPanel()
+            // Bottom Pane: Terminal (Tablet only)
+            if (isTablet && (currentDestination == AppDestination.Editor || currentDestination == AppDestination.Agent || currentDestination == AppDestination.Browser || currentDestination == AppDestination.Terminal)) {
+                Divider(color = Color.DarkGray)
+                TerminalPanel()
+            }
         }
     }
 }

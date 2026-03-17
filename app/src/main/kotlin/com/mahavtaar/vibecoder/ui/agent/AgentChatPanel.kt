@@ -92,24 +92,35 @@ fun AgentChatPanel(
             )
         }
 
-        LazyColumn(
-            state = listState,
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()
-                .padding(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            itemsIndexed(state.steps) { index, step ->
-                when (step) {
-                    is AgentStepUi.ThoughtBubble -> ThoughtBubbleCard(step)
-                    is AgentStepUi.ActionCard -> ActionCard(step)
-                    is AgentStepUi.ObservationCard -> ObservationCard(step) {
-                        viewModel.toggleObservationExpansion(index)
-                    }
-                    is AgentStepUi.FinalAnswerCard -> FinalAnswerCard(step)
-                    is AgentStepUi.ConfirmationCard -> ConfirmationCard(step) { approved ->
-                        viewModel.confirmAction(approved)
+        Box(modifier = Modifier.weight(1f).fillMaxWidth().padding(8.dp)) {
+            if (state.steps.isEmpty() && !state.isRunning) {
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Text("🤖", fontSize = 48.sp)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text("Run your first task", color = TextSecondary, fontSize = 14.sp)
+                }
+            } else {
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    itemsIndexed(state.steps) { index, step ->
+                        when (step) {
+                            is AgentStepUi.ThoughtBubble -> ThoughtBubbleCard(step)
+                            is AgentStepUi.ActionCard -> ActionCard(step)
+                            is AgentStepUi.ObservationCard -> ObservationCard(step) {
+                                viewModel.toggleObservationExpansion(index)
+                            }
+                            is AgentStepUi.FinalAnswerCard -> FinalAnswerCard(step)
+                            is AgentStepUi.ConfirmationCard -> ConfirmationCard(step) { approved ->
+                                viewModel.confirmAction(approved)
+                            }
+                        }
                     }
                 }
             }

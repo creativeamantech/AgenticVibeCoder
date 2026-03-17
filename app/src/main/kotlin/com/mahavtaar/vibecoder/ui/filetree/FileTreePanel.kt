@@ -60,15 +60,29 @@ fun FileTreePanel(
         }
 
         // Tree List
-        LazyColumn(modifier = Modifier.fillMaxWidth().weight(1f)) {
-            rootNode?.let { root ->
-                item {
-                    RenderNode(
-                        node = root,
-                        depth = 0,
-                        onToggle = { viewModel.toggleExpand(it) },
-                        onFileClick = { onFileSelected(it.path) }
-                    )
+        Box(modifier = Modifier.fillMaxWidth().weight(1f)) {
+            if (rootNode?.children?.isEmpty() == true || rootNode == null) {
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Icon(Icons.Default.FolderOpen, contentDescription = "Empty", tint = TextSecondary, modifier = Modifier.size(48.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text("Open a project folder to start", color = TextSecondary, fontSize = 14.sp)
+                }
+            } else {
+                LazyColumn(modifier = Modifier.fillMaxSize()) {
+                    rootNode?.let { root ->
+                        item {
+                            RenderNode(
+                                node = root,
+                                depth = 0,
+                                onToggle = { viewModel.toggleExpand(it) },
+                                onFileClick = { onFileSelected(it.path) }
+                            )
+                        }
+                    }
                 }
             }
         }

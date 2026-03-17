@@ -26,7 +26,8 @@ data class ModelManagerState(
     val downloadProgress: Float = 0f,
     val isDownloading: Boolean = false,
     val availableModels: List<String> = listOf("Qwen2.5-Coder-7B", "DeepSeek-Coder-V2-Lite", "Phi-4-mini", "Llama-3.2-3B"),
-    val currentEngine: String = "Ollama"
+    val currentEngine: String = "Ollama",
+    val isRefreshing: Boolean = false
 )
 
 @HiltViewModel
@@ -45,6 +46,14 @@ class ModelManagerViewModel @Inject constructor(
         viewModelScope.launch {
             val engine = context.dataStore.data.first()[enginePrefKey] ?: "Ollama"
             _uiState.update { it.copy(currentEngine = engine) }
+        }
+    }
+
+    fun refresh() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isRefreshing = true) }
+            kotlinx.coroutines.delay(1000) // Simulate scanning directory
+            _uiState.update { it.copy(isRefreshing = false) }
         }
     }
 

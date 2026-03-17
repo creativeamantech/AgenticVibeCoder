@@ -116,12 +116,22 @@ fun TerminalPanel(
         if (isExpanded) {
             // Main Xterm Area
             Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
-                val activeSession = viewModel.getActiveSession()
-                XtermWebView(
-                    bridge = viewModel,
-                    activeSession = activeSession,
-                    modifier = Modifier.fillMaxSize()
-                )
+                if (state.sessions.isEmpty()) {
+                    Column(
+                        modifier = Modifier.fillMaxSize(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Text("Create a session", color = TextSecondary, fontSize = 14.sp)
+                    }
+                } else {
+                    val activeSession = viewModel.getActiveSession()
+                    XtermWebView(
+                        bridge = viewModel,
+                        activeSession = activeSession,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
             }
 
             // Bottom Toolbar
