@@ -38,6 +38,18 @@ object ToolsModule {
 
     @Provides
     @Singleton
+    fun provideAgentSessionDao(database: AgentDatabase): com.mahavtaar.vibecoder.data.db.AgentSessionDao {
+        return database.agentSessionDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideAuditLogDao(database: AgentDatabase): com.mahavtaar.vibecoder.data.db.AuditLogDao {
+        return database.auditLogDao()
+    }
+
+    @Provides
+    @Singleton
     fun provideAgentMemory(memoryDao: MemoryDao): AgentMemory {
         return AgentMemory(memoryDao)
     }
