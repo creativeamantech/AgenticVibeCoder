@@ -21,3 +21,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "VibeCode"
 include(":app")
+include(":llama-jni")

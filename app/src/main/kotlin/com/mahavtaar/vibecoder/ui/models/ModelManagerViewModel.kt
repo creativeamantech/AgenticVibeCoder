@@ -25,9 +25,11 @@ data class ModelManagerState(
     val currentModelName: String? = null,
     val downloadProgress: Float = 0f,
     val isDownloading: Boolean = false,
+    val isLoadingModel: Boolean = false,
     val availableModels: List<String> = listOf("Qwen2.5-Coder-7B", "DeepSeek-Coder-V2-Lite", "Phi-4-mini", "Llama-3.2-3B"),
     val currentEngine: String = "Ollama",
-    val isRefreshing: Boolean = false
+    val isRefreshing: Boolean = false,
+    val snackbarMessage: String? = null
 )
 
 @HiltViewModel
@@ -70,13 +72,24 @@ class ModelManagerViewModel @Inject constructor(
 
     fun loadModel(modelPath: String) {
         viewModelScope.launch {
-            val success = llamaEngine.loadModel(modelPath)
+            _uiState.update { it.copy(isLoadingModel = true, snackbarMessage = null) }
+
+            // Provide a realistic context size for now, Phase 8 handles user config
+            val success = llamaEngine.loadModel(modelPath, 8192)
             if (success) {
                 _uiState.update {
-                    it.copy(isModelLoaded = true, currentModelName = modelPath)
+                    it.copy(isModelLoaded = true, currentModelName = modelPath, snackbarMessage = "Model loaded ✅")
                 }
+            } else {
+                _uiState.update { it.copy(snackbarMessage = "Failed to load model ❌") }
             }
+
+            _uiState.update { it.copy(isLoadingModel = false) }
         }
+    }
+
+    fun clearSnackbar() {
+        _uiState.update { it.copy(snackbarMessage = null) }
     }
 
     fun unloadModel() {

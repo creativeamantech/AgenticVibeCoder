@@ -6,44 +6,76 @@ import com.mahavtaar.vibecoder.llm.LlamaCppEngine
 import com.mahavtaar.vibecoder.llm.LlamaEngine
 import com.mahavtaar.vibecoder.llm.ModelDownloader
 import com.mahavtaar.vibecoder.llm.OllamaEngine
-import com.mahavtaar.vibecoder.ui.models.dataStore
+import com.mahavtaar.vibecoder.ui.settings.appDataStore
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.newSingleThreadContext
 import kotlinx.coroutines.runBlocking
+import javax.inject.Named
 import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
 object LlmModule {
 
+    @OptIn(DelicateCoroutinesApi::class)
     @Provides
     @Singleton
-    fun provideLlamaEngine(@ApplicationContext context: Context): LlamaEngine {
-        // Ideally, this should not use runBlocking, but for a simple DataStore read
-        // it's acceptable if the value is needed synchronously at app startup.
-        // A better approach would be to have a factory that dynamically creates the engine
-        // when requested, or initialize the DataStore value beforehand.
-        // For Phase 2, we stick to Ollama as default.
+    @Named("inferenceDispatcher")
+    fun provideInferenceDispatcher(): CoroutineDispatcher {
+        return newSingleThreadContext("llama-inference")
+    }
 
-        var engineType = "Ollama"
-        try {
-             engineType = runBlocking {
-                val enginePrefKey = stringPreferencesKey("engine_preference")
-                context.dataStore.data.first()[enginePrefKey] ?: "Ollama"
+    @Provides
+    @Singleton
+    fun provideLlamaEngine(
+        @ApplicationContext context: Context,
+        @Named("inferenceDispatcher") inferenceDispatcher: CoroutineDispatcher
+    ): LlamaEngine {
+        // We initialize the delegate engine wrapper to safely read the DataStore dynamically
+        // at load time, preventing runBlocking ANRs at app startup while fulfilling the dynamic requirement.
+        return object : LlamaEngine {
+            private var activeEngine: LlamaEngine? = null
+
+            override val isLoaded: Boolean
+                get() = activeEngine?.isLoaded ?: false
+
+            override val modelInfo: com.mahavtaar.vibecoder.llm.ModelInfo?
+                get() = activeEngine?.modelInfo
+
+            override suspend fun loadModel(modelPath: String, contextSize: Int): Boolean {
+                val enginePrefKey = androidx.datastore.preferences.core.stringPreferencesKey("llm_engine")
+                val engineType = context.appDataStore.data.first()[enginePrefKey] ?: "ollama"
+
+                activeEngine?.unloadModel() // Unload previous if exists
+
+                activeEngine = when (engineType) {
+                    "llama.cpp" -> LlamaCppEngine(inferenceDispatcher)
+                    "ollama" -> OllamaEngine(host = "192.168.1.100", port = 11434, modelName = "llama3")
+                    else -> OllamaEngine(host = "192.168.1.100", port = 11434, modelName = "llama3")
+                }
+
+                return activeEngine?.loadModel(modelPath, contextSize) ?: false
             }
-        } catch (e: Exception) {
-            // Fallback
-        }
 
-        return when (engineType) {
-            "LlamaCpp" -> LlamaCppEngine()
-            // TODO: Phase 2 - Read host and port from DataStore
-            "Ollama" -> OllamaEngine(host = "192.168.1.100", port = 11434, modelName = "llama3")
-            else -> OllamaEngine(host = "192.168.1.100", port = 11434, modelName = "llama3")
+            override fun generate(prompt: String, onToken: (String) -> Unit): kotlinx.coroutines.flow.Flow<String> {
+                return activeEngine?.generate(prompt, onToken) ?: kotlinx.coroutines.flow.flow { emit("Error: Engine not loaded") }
+            }
+
+            override suspend fun stop() {
+                activeEngine?.stop()
+            }
+
+            override fun unloadModel() {
+                activeEngine?.unloadModel()
+                activeEngine = null
+            }
         }
     }
 

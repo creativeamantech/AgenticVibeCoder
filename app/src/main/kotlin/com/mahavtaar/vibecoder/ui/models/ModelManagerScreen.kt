@@ -26,22 +26,43 @@ import com.mahavtaar.vibecoder.ui.theme.DarkBackground
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Scaffold
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
+import java.io.File
 
 @OptIn(androidx.compose.material.ExperimentalMaterialApi::class)
 @Composable
 fun ModelManagerScreen(viewModel: ModelManagerViewModel = hiltViewModel()) {
     val state by viewModel.uiState.collectAsState()
     val pullRefreshState = rememberPullRefreshState(refreshing = state.isRefreshing, onRefresh = { viewModel.refresh() })
+    val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
 
-    Box(modifier = Modifier.fillMaxSize().pullRefresh(pullRefreshState)) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(DarkBackground)
-                .padding(16.dp)
-                .verticalScroll(rememberScrollState())
-        ) {
-            Text("Model Manager", color = Color.White)
+    LaunchedEffect(state.snackbarMessage) {
+        state.snackbarMessage?.let { msg ->
+            snackbarHostState.showSnackbar(msg)
+            viewModel.clearSnackbar()
+        }
+    }
+
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        containerColor = DarkBackground
+    ) { padding ->
+        Box(modifier = Modifier.fillMaxSize().padding(padding).pullRefresh(pullRefreshState)) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(DarkBackground)
+                    .padding(16.dp)
+                    .verticalScroll(rememberScrollState())
+            ) {
+                Text("Model Manager", color = Color.White)
 
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text("Engine:", color = Color.White, modifier = Modifier.padding(end = 8.dp))
@@ -72,19 +93,36 @@ fun ModelManagerScreen(viewModel: ModelManagerViewModel = hiltViewModel()) {
             }
         }
 
-        Row(modifier = Modifier.padding(top = 16.dp)) {
-            Button(onClick = { viewModel.loadModel("path/to/model") }) {
-                Text("Load Model")
+            Row(modifier = Modifier.padding(top = 16.dp)) {
+                Button(
+                    onClick = {
+                        val modelsDir = File(context.getExternalFilesDir(null), "models")
+                        viewModel.loadModel(File(modelsDir, "Qwen2.5-Coder-7B.gguf").absolutePath)
+                    },
+                    enabled = !state.isLoadingModel
+                ) {
+                    Text("Load Qwen2.5")
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                Button(onClick = { viewModel.unloadModel() }) {
+                    Text("Unload Model")
+                }
             }
-            Button(onClick = { viewModel.unloadModel() }) {
-                Text("Unload Model")
+
+            if (state.isLoadingModel) {
+                Spacer(modifier = Modifier.height(16.dp))
+                CircularProgressIndicator(color = androidx.compose.ui.graphics.Color.White)
+            } else if (state.isModelLoaded) {
+                Spacer(modifier = Modifier.height(16.dp))
+                Text("✅ Model Loaded: ${state.currentModelName}", color = androidx.compose.ui.graphics.Color.Green)
             }
+
+            }
+            PullRefreshIndicator(
+                refreshing = state.isRefreshing,
+                state = pullRefreshState,
+                modifier = Modifier.align(Alignment.TopCenter)
+            )
         }
-        }
-        PullRefreshIndicator(
-            refreshing = state.isRefreshing,
-            state = pullRefreshState,
-            modifier = Modifier.align(Alignment.TopCenter)
-        )
     }
 }
