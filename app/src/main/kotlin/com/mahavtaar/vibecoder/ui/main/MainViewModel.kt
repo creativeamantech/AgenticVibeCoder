@@ -8,6 +8,13 @@ import kotlinx.coroutines.flow.asStateFlow
 import javax.inject.Inject
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.edit
+import com.mahavtaar.vibecoder.ui.settings.appDataStore
+import androidx.lifecycle.viewModelScope
+import com.mahavtaar.vibecoder.error.GlobalErrorViewModel
+import com.mahavtaar.vibecoder.error.AppError
+import com.mahavtaar.vibecoder.util.AppUpdateChecker
 
 sealed class AppDestination {
     object Editor : AppDestination()
@@ -20,14 +27,6 @@ sealed class AppDestination {
     object AuditLog : AppDestination()
     object Onboarding : AppDestination()
 }
-
-import androidx.datastore.preferences.core.booleanPreferencesKey
-import androidx.datastore.preferences.core.edit
-import com.mahavtaar.vibecoder.ui.settings.appDataStore
-import androidx.lifecycle.viewModelScope
-import com.mahavtaar.vibecoder.error.GlobalErrorViewModel
-import com.mahavtaar.vibecoder.error.AppError
-import com.mahavtaar.vibecoder.util.AppUpdateChecker
 
 @HiltViewModel
 class MainViewModel @Inject constructor(

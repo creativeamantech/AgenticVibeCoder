@@ -25,12 +25,6 @@ object BrowserModule {
 
     @Provides
     @Singleton
-    fun provideWebViewProvider(): com.mahavtaar.vibecoder.browser.WebViewProvider {
-        return com.mahavtaar.vibecoder.browser.WebViewProvider()
-    }
-
-    @Provides
-    @Singleton
     fun provideWebViewBridge(
         @ApplicationContext context: Context,
         webViewProvider: com.mahavtaar.vibecoder.browser.WebViewProvider

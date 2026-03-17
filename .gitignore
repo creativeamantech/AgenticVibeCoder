@@ -4,4 +4,6 @@ build/
 *.iml
 local.properties
 .DS_Store
-/llama-jni/src/main/cpp/llama.cpp/
+llama-jni/src/main/cpp/llama.cpp/
+**/build/
+.cxx/

@@ -2,7 +2,9 @@ package com.mahavtaar.vibecoder.data.db
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import kotlinx.serialization.Serializable
 
+@Serializable
 @Entity(tableName = "audit_log")
 data class AuditLog(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,

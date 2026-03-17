@@ -27,6 +27,9 @@ class InlineCompletion @Inject constructor(
         if (!isEnabled || !llamaEngine.isLoaded) return
 
         debounceJob?.cancel()
+        // Ensure any previous generation is actually stopped in the native C++ engine
+        scope.launch { llamaEngine.stop() }
+
         debounceJob = scope.launch {
             delay(500) // 500ms debounce
 
@@ -80,7 +83,11 @@ class InlineCompletion @Inject constructor(
             scope.launch {
                 webViewWrapper.dismissGhostText()
                 _ghostText.value = null
+                llamaEngine.stop()
             }
+        } else {
+            // Also stop any potentially active hidden generation loop
+            scope.launch { llamaEngine.stop() }
         }
     }
 }

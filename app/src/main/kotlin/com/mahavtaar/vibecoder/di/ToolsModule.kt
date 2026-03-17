@@ -58,18 +58,6 @@ object ToolsModule {
 
     @Provides
     @Singleton
-    fun provideAgentMemory(memoryDao: MemoryDao): AgentMemory {
-        return AgentMemory(memoryDao)
-    }
-
-    @Provides
-    @Singleton
-    fun provideInMemoryHashMap(): InMemoryHashMap {
-        return InMemoryHashMap()
-    }
-
-    @Provides
-    @Singleton
     fun provideWorkingDir(@ApplicationContext context: Context): File {
         // Use an app-private sandbox directory to prevent accidental system destruction
         val dir = File(context.filesDir, "workspace")
@@ -141,9 +129,4 @@ object ToolsModule {
         )
     }
 
-    @Provides
-    @Singleton
-    fun provideToolRegistry(tools: Set<@JvmSuppressWildcards AgentTool>): ToolRegistry {
-        return ToolRegistry(tools)
-    }
 }

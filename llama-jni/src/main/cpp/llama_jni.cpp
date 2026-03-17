@@ -128,24 +128,29 @@ Java_com_mahavtaar_vibecoder_llm_LlamaJni_generate(
     std::vector<llama_token> prompt_tokens(elements, elements + len);
     env->ReleaseIntArrayElements(tokenIds, elements, JNI_ABORT);
 
-    // Eval the prompt
-    llama_batch batch = llama_batch_init(512, 0, 1);
+    // Eval the prompt in chunks
+    int n_batch = 512;
+    llama_batch batch = llama_batch_init(n_batch, 0, 1);
 
-    for (size_t i = 0; i < prompt_tokens.size(); ++i) {
-        batch.token[batch.n_tokens] = prompt_tokens[i];
-        batch.pos[batch.n_tokens]   = i;
-        batch.n_seq_id[batch.n_tokens] = 1;
-        batch.seq_id[batch.n_tokens][0] = 0;
-        batch.logits[batch.n_tokens] = false;
-        batch.n_tokens++;
-    }
-    // Only logits for the last token in the prompt
-    batch.logits[batch.n_tokens - 1] = true;
+    for (size_t i = 0; i < prompt_tokens.size(); i += n_batch) {
+        int n_eval = std::min(prompt_tokens.size() - i, (size_t)n_batch);
+        batch.n_tokens = 0;
 
-    if (llama_decode(ctx, batch) != 0) {
-        LOGE("llama_decode() failed on prompt");
-        llama_batch_free(batch);
-        return env->NewStringUTF("");
+        for (size_t j = 0; j < n_eval; ++j) {
+            batch.token[batch.n_tokens] = prompt_tokens[i + j];
+            batch.pos[batch.n_tokens]   = i + j;
+            batch.n_seq_id[batch.n_tokens] = 1;
+            batch.seq_id[batch.n_tokens][0] = 0;
+            // Only logits for the absolute last token in the prompt
+            batch.logits[batch.n_tokens] = (i + j == prompt_tokens.size() - 1);
+            batch.n_tokens++;
+        }
+
+        if (llama_decode(ctx, batch) != 0) {
+            LOGE("llama_decode() failed on prompt chunk %zu", i);
+            llama_batch_free(batch);
+            return env->NewStringUTF("");
+        }
     }
 
     jclass callbackClass = env->GetObjectClass(callback);
