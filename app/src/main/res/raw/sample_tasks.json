@@ -1,0 +1,122 @@
+[
+    {
+        "title": "Scaffold Jetpack Compose App",
+        "description": "Create a basic Android Compose skeleton with a MainActivity and build.gradle",
+        "prompt": "Scaffold a new Android project. Create a 'app/src/main/java' directory. Create a 'MainActivity.kt' that extends ComponentActivity and uses setContent with a basic Jetpack Compose layout (e.g. a Text widget saying 'Hello World'). Also create a basic 'build.gradle.kts' in the root and in the 'app' directory.",
+        "category": "scaffold"
+    },
+    {
+        "title": "Build a Calculator App",
+        "description": "Generate a simple Python calculator script",
+        "prompt": "Write a Python script named 'calculator.py' that defines a class Calculator with methods for add, subtract, multiply, and divide. Include a __main__ block that demonstrates its usage. Save it to the workspace and run it.",
+        "category": "scaffold"
+    },
+    {
+        "title": "Find the Bug in my Script",
+        "description": "Analyze a file for logical or syntax errors",
+        "prompt": "Read the file 'src/main.py'. Analyze the code for any syntax errors or logical bugs. If you find an error, use the patch_file tool to fix it and explain what you fixed.",
+        "category": "debug"
+    },
+    {
+        "title": "Fix Missing Dependencies",
+        "description": "Find unreferenced imports and add them to Gradle",
+        "prompt": "Read 'app/build.gradle.kts'. Notice if the Jetpack Compose Material 3 library is missing. If it is, use the add_dependency tool to inject 'implementation(\"androidx.compose.material3:material3\")' into the dependencies block.",
+        "category": "debug"
+    },
+    {
+        "title": "Research CameraX Setup",
+        "description": "Browse the web to find the latest CameraX dependencies",
+        "prompt": "Search Google for 'Android CameraX dependencies'. Extract the latest version numbers from the official Android Developer documentation. Return a final answer with the exact Gradle implementation lines needed.",
+        "category": "research"
+    },
+    {
+        "title": "Summarize Python Docs",
+        "description": "Extract specific information from Python documentation",
+        "prompt": "Navigate to 'https://docs.python.org/3/library/itertools.html'. Extract the visible text and summarize the usage of the 'itertools.permutations' function. Provide a brief code example in your final answer.",
+        "category": "research"
+    },
+    {
+        "title": "Refactor to Coroutines",
+        "description": "Convert callback-based code to Kotlin Coroutines",
+        "prompt": "Read the file 'CallbackManager.kt'. Use the explain_code tool to understand its current structure. Then, rewrite the file completely to use Kotlin Coroutines instead of interfaces. Write the new code back to the file.",
+        "category": "refactor"
+    },
+    {
+        "title": "Rename Project Files",
+        "description": "Move and organize files in a messy directory",
+        "prompt": "List the files in the 'src/old_folder/' directory. For every file ending in '.txt', use the move_file tool to move it to 'src/docs/'. Finally, delete the 'src/old_folder/' directory.",
+        "category": "file operations"
+    },
+    {
+        "title": "Grep for TODOs",
+        "description": "Search the workspace for unfinished tasks",
+        "prompt": "Use the search_in_files tool to find all instances of 'TODO' in the current workspace. Provide a summary list of the files and line numbers where they appear.",
+        "category": "file operations"
+    },
+    {
+        "title": "Initialize Git Repo",
+        "description": "Setup a local repository and commit changes",
+        "prompt": "Run a shell command to execute 'git init' in the current working directory. Then, run 'git add .', followed by 'git commit -m \"Initial commit\"'. Use the run_shell tool.",
+        "category": "git"
+    },
+    {
+        "title": "Check Git Status",
+        "description": "List untracked files and branch info",
+        "prompt": "Use the git_command tool with the argument 'status' to check the current state of the repository. Report back which files are untracked or modified.",
+        "category": "git"
+    },
+    {
+        "title": "Download Test Data",
+        "description": "Fetch a JSON file from the web for testing",
+        "prompt": "Use the download_file tool to download 'https://jsonplaceholder.typicode.com/posts/1' and save it as 'test_data.json' in the workspace. Read the file to confirm its contents.",
+        "category": "browsing"
+    },
+    {
+        "title": "Scrape Hacker News",
+        "description": "Extract the top headlines from a news site",
+        "prompt": "Navigate to 'https://news.ycombinator.com/'. Extract the visible text to find the top 3 headlines currently on the front page. Provide them in a numbered list.",
+        "category": "browsing"
+    },
+    {
+        "title": "Format JSON Files",
+        "description": "Read, prettify, and overwrite a JSON file",
+        "prompt": "Read 'config.json'. It is currently minified on a single line. Use the run_python tool to execute a short inline script that parses 'config.json' and rewrites it with an indentation of 4 spaces.",
+        "category": "scripting"
+    },
+    {
+        "title": "Check Environment",
+        "description": "List system paths and variables",
+        "prompt": "Use the get_env tool to check the 'PATH' and 'HOME' environment variables. Print them out clearly.",
+        "category": "shell"
+    },
+    {
+        "title": "Compile Gradle Project",
+        "description": "Trigger a build to verify compilation",
+        "prompt": "Use the run_gradle tool to execute the 'assembleDebug' task in the current project directory. Wait for the build to finish and report if it succeeded or failed based on the output.",
+        "category": "shell"
+    },
+    {
+        "title": "Write a Unit Test",
+        "description": "Generate tests for an existing class",
+        "prompt": "Read 'MathUtils.kt' which contains basic arithmetic functions. Generate a JUnit4 test class named 'MathUtilsTest.kt' covering the edge cases of these functions, and write it to the 'tests' directory.",
+        "category": "code generation"
+    },
+    {
+        "title": "Add Missing Docs",
+        "description": "Generate Javadoc/KDoc comments",
+        "prompt": "Analyze 'UserService.kt'. It lacks KDoc comments. Use the generate_code tool or patch_file tool to add professional KDoc comments explaining the purpose of each public function in the file.",
+        "category": "refactor"
+    },
+    {
+        "title": "Find a StackOverflow Answer",
+        "description": "Search for a solution to a specific error",
+        "prompt": "Search Google for 'Android java.lang.OutOfMemoryError: Failed to allocate a 100 byte allocation'. Find a highly upvoted StackOverflow thread, read it, and summarize the best solution.",
+        "category": "research"
+    },
+    {
+        "title": "Remember API Keys",
+        "description": "Store config strings in Agent Memory",
+        "prompt": "Store the string 'sk-test-12345' into your memory under the key 'openai_api_key'. Then, list your memory to confirm it has been saved.",
+        "category": "memory"
+    }
+]
