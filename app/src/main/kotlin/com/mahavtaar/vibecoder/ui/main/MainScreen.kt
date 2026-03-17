@@ -21,13 +21,21 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalContext
+import com.mahavtaar.vibecoder.ui.agent.AgentChatPanel
+import com.mahavtaar.vibecoder.ui.agent.BrowserPanel
 import com.mahavtaar.vibecoder.ui.theme.DarkBackground
 import com.mahavtaar.vibecoder.ui.theme.DarkSurface
 import com.mahavtaar.vibecoder.ui.theme.TextPrimary
+import java.io.File
+import android.webkit.WebView
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainScreen() {
+fun MainScreen(webView: WebView?) {
+    val context = LocalContext.current
+    val workingDir = File(context.filesDir, "workspace").absolutePath
+
     Column(modifier = Modifier.fillMaxSize().background(DarkBackground)) {
         // Toolbar
         TopAppBar(
@@ -73,16 +81,19 @@ fun MainScreen() {
             Divider(modifier = Modifier.fillMaxHeight().width(1.dp), color = Color.DarkGray)
 
             // Right Pane: Agent Chat / Browser
-            Box(
+            Column(
                 modifier = Modifier
                     .weight(1.5f)
                     .fillMaxHeight()
                     .background(DarkSurface)
-                    .padding(8.dp),
-                contentAlignment = Alignment.Center
             ) {
-                Text("🤖 Agent / 🌐 Browser Stub", color = TextPrimary)
-                // TODO: Phase 4 & 5 - Implement Agent Chat Panel and BrowsingAgent UI
+                Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+                    AgentChatPanel(workingDir = workingDir)
+                }
+                Divider(color = Color.DarkGray)
+                Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+                    BrowserPanel(webView = webView)
+                }
             }
         }
 

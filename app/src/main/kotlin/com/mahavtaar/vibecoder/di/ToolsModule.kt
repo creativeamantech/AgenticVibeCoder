@@ -4,6 +4,8 @@ import android.content.Context
 import androidx.room.Room
 import com.mahavtaar.vibecoder.agent.memory.AgentMemory
 import com.mahavtaar.vibecoder.agent.tools.*
+import com.mahavtaar.vibecoder.browser.BrowsingAgent
+import com.mahavtaar.vibecoder.browser.BrowsingRateLimiter
 import com.mahavtaar.vibecoder.data.db.AgentDatabase
 import com.mahavtaar.vibecoder.data.db.MemoryDao
 import com.mahavtaar.vibecoder.llm.LlamaEngine
@@ -19,6 +21,12 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object ToolsModule {
+
+    @Provides
+    @Singleton
+    fun provideBrowsingRateLimiter(): BrowsingRateLimiter {
+        return BrowsingRateLimiter()
+    }
 
     @Provides
     @Singleton
@@ -77,7 +85,9 @@ object ToolsModule {
     fun provideAgentTools(
         workingDir: File,
         inMemoryHashMap: InMemoryHashMap,
-        llamaEngine: LlamaEngine
+        llamaEngine: LlamaEngine,
+        browsingAgent: BrowsingAgent,
+        browsingRateLimiter: BrowsingRateLimiter
     ): Set<AgentTool> {
         return setOf(
             // File Tools
@@ -115,7 +125,19 @@ object ToolsModule {
             ScaffoldProjectTool(workingDir),
             GitCommandTool(workingDir),
             ReadGradleTool(workingDir),
-            AddDependencyTool(workingDir)
+            AddDependencyTool(workingDir),
+
+            // Browsing Tools
+            BrowseUrlTool(browsingAgent, browsingRateLimiter),
+            ClickElementTool(browsingAgent, browsingRateLimiter),
+            FillInputTool(browsingAgent, browsingRateLimiter),
+            ExtractTextTool(browsingAgent, browsingRateLimiter),
+            TakeScreenshotTool(browsingAgent, browsingRateLimiter),
+            ScrollPageTool(browsingAgent, browsingRateLimiter),
+            WaitForElementTool(browsingAgent, browsingRateLimiter),
+            GetPageLinksTool(browsingAgent, browsingRateLimiter),
+            WebSearchTool(browsingAgent, browsingRateLimiter),
+            DownloadFileTool(browsingAgent, browsingRateLimiter, workingDir)
         )
     }
 
