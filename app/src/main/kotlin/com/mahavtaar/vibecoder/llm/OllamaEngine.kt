@@ -6,6 +6,7 @@ import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.preparePost
 import io.ktor.client.request.setBody
+import io.ktor.client.request.get
 import io.ktor.client.statement.bodyAsChannel
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
@@ -112,5 +113,14 @@ class OllamaEngine(
     override fun unloadModel() {
         isLoaded = false
         modelInfo = null
+    }
+
+    suspend fun ping(): Boolean {
+        return try {
+            val response = client.get("http://$host:$port/")
+            response.status.value in 200..299
+        } catch (e: Exception) {
+            false
+        }
     }
 }

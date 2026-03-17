@@ -95,6 +95,7 @@ class EditorViewModel @Inject constructor(
         tabManager.switchTab(id)
     }
 
+    @android.webkit.JavascriptInterface
     override fun onContentChanged(content: String) {
         val activeId = _uiState.value.activeTab?.id ?: return
         tabManager.markDirty(activeId, content)
@@ -105,6 +106,7 @@ class EditorViewModel @Inject constructor(
         }
     }
 
+    @android.webkit.JavascriptInterface
     override fun onCursorMoved(line: Int, col: Int) {
         val activeId = _uiState.value.activeTab?.id ?: return
         tabManager.updateCursor(activeId, line)
@@ -115,10 +117,12 @@ class EditorViewModel @Inject constructor(
         }
     }
 
+    @android.webkit.JavascriptInterface
     override fun onSaveRequested() {
         saveCurrentFile()
     }
 
+    @android.webkit.JavascriptInterface
     override fun onContextMenuAction(action: String, selectedText: String) {
         // TODO: Phase 4/6 integration - Send this task to the AgentOrchestrator
         // For example: if action == "Explain", create task "Explain this code: \n$selectedText"
