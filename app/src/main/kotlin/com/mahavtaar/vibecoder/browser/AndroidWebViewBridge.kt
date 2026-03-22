@@ -75,8 +75,8 @@ class AndroidWebViewBridge(private val context: Context, val webView: WebView) :
                 handler: SslErrorHandler?,
                 error: SslError?
             ) {
-                // Ignore SSL errors for testing, but ideally we'd prompt the user
-                handler?.proceed()
+                // Cancel by default to prevent Man-In-The-Middle attacks
+                handler?.cancel()
             }
         }
 

@@ -30,7 +30,7 @@ fun MonacoWebView(
                     javaScriptEnabled = true
                     domStorageEnabled = true
                     allowFileAccessFromFileURLs = true
-                    allowUniversalAccessFromFileURLs = true
+                    allowUniversalAccessFromFileURLs = false
                 }
 
                 webChromeClient = WebChromeClient()
