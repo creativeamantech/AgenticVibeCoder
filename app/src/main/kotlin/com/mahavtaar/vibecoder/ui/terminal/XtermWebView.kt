@@ -43,7 +43,7 @@ fun XtermWebView(
                     javaScriptEnabled = true
                     domStorageEnabled = true
                     allowFileAccessFromFileURLs = true
-                    allowUniversalAccessFromFileURLs = true
+                    allowUniversalAccessFromFileURLs = false
                 }
 
                 webChromeClient = WebChromeClient()
